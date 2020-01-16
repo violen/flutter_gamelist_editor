@@ -1,8 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gamelist_editor/models/game.dart';
-import 'package:flutter_gamelist_editor/models/gist.dart';
-import 'package:flutter_gamelist_editor/services/github.dart';
+
+import '../models/game.dart';
+import '../models/gist.dart';
+import '../services/github.dart';
 
 class GameFormPage extends StatefulWidget {
   GameFormPage({Key key, this.game, this.index}) : super(key: key);
@@ -59,7 +60,9 @@ class _GameFormPageState extends State<GameFormPage> {
         actions: <Widget>[
           IconButton(
             icon: Icon(Icons.save),
-            onPressed: (_formKey.currentState != null && _formKey.currentState.validate() || _canSave)
+            onPressed: (_formKey.currentState != null &&
+                        _formKey.currentState.validate() ||
+                    _canSave)
                 ? () {
                     var newGame = Game(
                         title: _titleController.text,
@@ -111,7 +114,7 @@ class _GameFormPageState extends State<GameFormPage> {
                   items: System.values.map((system) {
                     return DropdownMenuItem<System>(
                       value: system,
-                      child: Text(describeEnum(system)),
+                      child: Text(system.name),
                     );
                   }).toList(),
                 ),
@@ -142,7 +145,7 @@ class _GameFormPageState extends State<GameFormPage> {
                           Icon(_selectedPlayStyles.contains(playStyle)
                               ? Icons.check
                               : null),
-                          Text(describeEnum(playStyle))
+                          Text(playStyle.name)
                         ],
                       ),
                     );
