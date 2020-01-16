@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gamelist_editor/widgets/system_bubble.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
@@ -125,17 +126,26 @@ class _MyHomePageState extends State<MyHomePage> {
                 // Delete
                 Gist().remove(Gist().gameList[index]);
                 github.saveGistLocally();
-              } 
+              }
             },
             onHorizontalDragUpdate: (dragUpdate) {
               _dragUpdateX = dragUpdate.globalPosition.dx;
             },
             child: Container(
               decoration: BoxDecoration(
-                  border: Border.all(
-                      color: Theme.of(context).primaryColor, width: 1)),
+                border:
+                    Border.all(color: Theme.of(context).primaryColor, width: 1),
+              ),
               padding: EdgeInsets.all(8),
-              child: Center(child: Text(Gist().gameList[index].title)),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Spacer(),
+                  Text(Gist().gameList[index].title),
+                  Spacer(),
+                  SystemBubble(system: Gist().gameList[index].system,),
+                ],
+              ),
             ),
           );
         },
