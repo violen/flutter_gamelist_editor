@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import 'package:google_mlkit_language_id/google_mlkit_language_id.dart';
+import 'package:google_mlkit_translation/google_mlkit_translation.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../models/game.dart';
 import '../models/gist.dart';
@@ -19,6 +23,11 @@ class _GameFormPageState extends State<GameFormPage> {
   final _titleController = TextEditingController();
   final _selectedPlayStyles = <PlayStyle>[];
   System? _selectedSystem;
+  bool _isScanning = false;
+
+  final TextRecognizer _textRecognizer =
+      TextRecognizer(script: TextRecognitionScript.latin);
+  final LanguageIdentifier _languageIdentifier = LanguageIdentifier(confidenceThreshold: 0.5);
 
   @override
   void initState() {
@@ -33,7 +42,75 @@ class _GameFormPageState extends State<GameFormPage> {
   @override
   void dispose() {
     _titleController.dispose();
+    _textRecognizer.close();
+    _languageIdentifier.close();
     super.dispose();
+  }
+
+  Future<void> _scanTitle() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.camera);
+
+    if (image == null) return;
+
+    setState(() => _isScanning = true);
+
+    try {
+      final inputImage = InputImage.fromFilePath(image.path);
+      final RecognizedText recognizedText =
+          await _textRecognizer.processImage(inputImage);
+
+      String foundText = recognizedText.text.replaceAll('\n', ' ').trim();
+
+      if (foundText.isNotEmpty) {
+        // Step 2: Identify Language
+        final String languageCode = await _languageIdentifier.identifyLanguage(foundText);
+        debugPrint("Detected language: $languageCode");
+
+        if (languageCode != 'de' && languageCode != 'und') {
+          // Step 3: Translate if not German
+          final sourceLanguage = BCP47Code.fromCode(languageCode);
+          if (sourceLanguage != null) {
+            final translator = OnDeviceTranslator(
+              sourceLanguage: sourceLanguage,
+              targetLanguage: TranslateLanguage.german,
+            );
+            
+            final String translatedText = await translator.translateText(foundText);
+            await translator.close();
+            
+            if (mounted) {
+              final bool? useTranslation = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text("Übersetzung gefunden"),
+                  content: Text("Original: $foundText\n\nÜbersetzung: $translatedText\n\nSoll die Übersetzung verwendet werden?"),
+                  actions: [
+                    TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("ORIGINAL")),
+                    TextButton(onPressed: () => Navigator.pop(context, true), child: const Text("ÜBERSETZUNG")),
+                  ],
+                ),
+              );
+              
+              if (useTranslation == true) {
+                foundText = translatedText;
+              }
+            }
+          }
+        }
+
+        _titleController.text = foundText;
+      }
+    } catch (e) {
+      debugPrint("OCR/Translation error: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Fehler bei der Texterkennung: $e")),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isScanning = false);
+    }
   }
 
   void _save() {
@@ -42,7 +119,7 @@ class _GameFormPageState extends State<GameFormPage> {
           title: _titleController.text,
           system: _selectedSystem ?? System.unknown,
           playStyles: _selectedPlayStyles);
-      
+
       if (widget.game != null && widget.index != null) {
         Gist().gameList[widget.index!] = newGame;
       } else {
@@ -77,13 +154,28 @@ class _GameFormPageState extends State<GameFormPage> {
             children: [
               TextFormField(
                 controller: _titleController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: "Titel",
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.title),
+                  border: const OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.title),
+                  suffixIcon: _isScanning
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: Padding(
+                            padding: EdgeInsets.all(12),
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        )
+                      : IconButton(
+                          icon: const Icon(Icons.camera_alt),
+                          onPressed: _scanTitle,
+                          tooltip: "Titel scannen",
+                        ),
                 ),
-                validator: (value) =>
-                    (value == null || value.isEmpty) ? 'Bitte Titel eingeben' : null,
+                validator: (value) => (value == null || value.isEmpty)
+                    ? 'Bitte Titel eingeben'
+                    : null,
               ),
               const SizedBox(height: 20),
               DropdownButtonFormField<System>(
@@ -95,7 +187,8 @@ class _GameFormPageState extends State<GameFormPage> {
                 value: _selectedSystem,
                 items: System.values
                     .where((s) => s != System.unknown)
-                    .map((s) => DropdownMenuItem(value: s, child: Text(s.displayName)))
+                    .map((s) =>
+                        DropdownMenuItem(value: s, child: Text(s.displayName)))
                     .toList(),
                 onChanged: (val) => setState(() => _selectedSystem = val),
                 validator: (val) => val == null ? 'Bitte System wählen' : null,
@@ -130,7 +223,9 @@ class _GameFormPageState extends State<GameFormPage> {
                   padding: const EdgeInsets.only(top: 8, left: 12),
                   child: Text(
                     "Bitte mindestens einen Stil wählen",
-                    style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 12),
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                        fontSize: 12),
                   ),
                 ),
             ],
@@ -143,5 +238,22 @@ class _GameFormPageState extends State<GameFormPage> {
         icon: const Icon(Icons.save),
       ),
     );
+  }
+}
+
+extension BCP47Code on TranslateLanguage {
+  static TranslateLanguage? fromCode(String code) {
+    // Map common BCP47 codes to ML Kit TranslateLanguage
+    switch (code) {
+      case 'en': return TranslateLanguage.english;
+      case 'ja': return TranslateLanguage.japanese;
+      case 'fr': return TranslateLanguage.french;
+      case 'es': return TranslateLanguage.spanish;
+      case 'it': return TranslateLanguage.italian;
+      case 'ko': return TranslateLanguage.korean;
+      case 'zh': return TranslateLanguage.chinese;
+      // Add more as needed
+      default: return null;
+    }
   }
 }
