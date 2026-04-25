@@ -16,7 +16,9 @@
 - Modernization of a 7-year-old Flutter app. (Completed Apr 2026)
 - Migration to Null Safety. (Completed Apr 2026)
 - Automation of workflows via GitHub (PRs, Reviews). (Completed Apr 2026)
-- Improvement of UI/UX and codebase standards. (In Progress)
+- Improvement of UI/UX and codebase standards. (Completed Apr 2026)
+- Search and Filtering (Features 1-4). (Completed Apr 2026)
+- Camera and OCR integration (Feature 5-6). (In Progress)
 
 ## Development Notes
 - The app manages a game library stored in a GitHub Gist (`gamesList.json`).
