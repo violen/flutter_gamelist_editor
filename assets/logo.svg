@@ -1,0 +1,28 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background: Anthracite Rounded Square -->
+  <rect width="512" height="512" rx="100" fill="#1A1A1A"/>
+  
+  <!-- Switch Body / Screen Area -->
+  <rect x="120" y="160" width="272" height="192" rx="10" stroke="#FF7800" stroke-width="20"/>
+  
+  <!-- Left Joy-Con -->
+  <path d="M120 160H100C78 160 60 182 60 204V308C60 330 78 352 100 352H120V160Z" fill="#FF7800"/>
+  <circle cx="90" cy="210" r="15" fill="#1A1A1A"/> <!-- Analog Stick L -->
+  
+  <!-- Right Joy-Con -->
+  <path d="M392 160H412C434 160 452 182 452 204V308C452 330 434 352 412 352H392V160Z" fill="#FF7800"/>
+  <circle cx="422" cy="300" r="15" fill="#1A1A1A"/> <!-- Analog Stick R -->
+
+  <!-- List Content on Screen -->
+  <!-- Line 1 -->
+  <rect x="160" y="200" width="24" height="24" rx="4" fill="#FF7800"/> <!-- Checkbox 1 -->
+  <rect x="200" y="208" width="150" height="8" rx="4" fill="#FF7800"/> <!-- Text line 1 -->
+  
+  <!-- Line 2 -->
+  <rect x="160" y="244" width="24" height="24" rx="4" fill="#FF7800"/> <!-- Checkbox 2 -->
+  <rect x="200" y="252" width="120" height="8" rx="4" fill="#FF7800"/> <!-- Text line 2 -->
+  
+  <!-- Line 3 -->
+  <rect x="160" y="288" width="24" height="24" rx="4" fill="#FF7800"/> <!-- Checkbox 3 -->
+  <rect x="200" y="296" width="140" height="8" rx="4" fill="#FF7800"/> <!-- Text line 3 -->
+</svg>
