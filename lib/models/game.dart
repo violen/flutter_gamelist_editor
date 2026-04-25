@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 enum PlayStyle { letsPlay, casual, withCommunity }
 
-enum System { snes, wii, wiiu, gcn, pc, genesis, switchConsole, unknown }
+enum System { snes, wii, wiiu, gcn, pc, genesis, switchConsole, nds, n3ds, unknown }
 
 class Game implements Comparable<Game> {
   String title;
@@ -52,8 +52,9 @@ System _parseSystem(String? system) {
   
   final input = system.toLowerCase();
   
-  // Special handling for renamed enums
+  // Special handling for renamed or short enums
   if (input == 'switch') return System.switchConsole;
+  if (input == '3ds') return System.n3ds;
   
   return System.values.firstWhere(
     (val) => val.name.toLowerCase() == input, 
@@ -78,6 +79,10 @@ extension SystemExtension on System {
         return 'GENESIS';
       case System.switchConsole:
         return 'NSW';
+      case System.nds:
+        return 'NDS';
+      case System.n3ds:
+        return '3DS';
       case System.unknown:
         return 'UNKNOWN';
     }
@@ -99,6 +104,10 @@ extension SystemExtension on System {
         return const Color(0xFF000000); // SEGA Black
       case System.switchConsole:
         return const Color(0xFFE60012); // Switch Red
+      case System.nds:
+        return const Color(0xFFBDBDBD); // NDS Silver
+      case System.n3ds:
+        return const Color(0xFFE6192E); // 3DS Red
       case System.unknown:
         return Colors.grey;
     }
