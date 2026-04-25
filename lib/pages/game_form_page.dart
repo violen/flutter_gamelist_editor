@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../models/game.dart';
@@ -6,24 +5,23 @@ import '../models/gist.dart';
 import '../services/github.dart';
 
 class GameFormPage extends StatefulWidget {
-  GameFormPage({Key key, this.game, this.index}) : super(key: key);
+  const GameFormPage({super.key, this.game, this.index});
 
-  final Game game;
-  final int index;
+  final Game? game;
+  final int? index;
 
   @override
-  _GameFormPageState createState() => _GameFormPageState();
+  State<GameFormPage> createState() => _GameFormPageState();
 }
 
 class _GameFormPageState extends State<GameFormPage> {
-  final _scaffoldKey = GlobalKey<ScaffoldState>();
   final _formKey = GlobalKey<FormState>();
 
   final _titleController = TextEditingController();
 
   final _selectedPlayStyles = <PlayStyle>[];
 
-  System _selectedSystem;
+  System? _selectedSystem;
 
   bool _canSave = false;
 
@@ -32,14 +30,14 @@ class _GameFormPageState extends State<GameFormPage> {
     super.initState();
 
     if (widget.game != null) {
-      _titleController.text = widget.game.title;
-      _selectedSystem = widget.game.system;
-      _selectedPlayStyles.addAll(widget.game.playStyles);
+      _titleController.text = widget.game!.title;
+      _selectedSystem = widget.game!.system;
+      _selectedPlayStyles.addAll(widget.game!.playStyles);
     }
 
     _titleController.addListener(() {
       setState(() {
-        _canSave = _formKey.currentState.validate();
+        _canSave = _formKey.currentState?.validate() ?? false;
       });
     });
   }
@@ -54,25 +52,25 @@ class _GameFormPageState extends State<GameFormPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      key: _scaffoldKey,
       appBar: AppBar(
-        title: (widget.game != null) ? Text("Bearbeten") : Text("Erstellen"),
+        title: (widget.game != null) ? const Text("Bearbeiten") : const Text("Erstellen"),
         actions: <Widget>[
           IconButton(
-            icon: Icon(Icons.save),
-            onPressed: (_formKey.currentState != null &&
-                        _formKey.currentState.validate() ||
-                    _canSave)
+            icon: const Icon(Icons.save),
+            onPressed: (_canSave || (_formKey.currentState?.validate() ?? false))
                 ? () {
                     var newGame = Game(
                         title: _titleController.text,
-                        system: _selectedSystem,
+                        system: _selectedSystem ?? System.unknown,
                         playStyles: _selectedPlayStyles);
-                    widget.game != null
-                        ? Gist().gameList[widget.index] = newGame
-                        : Gist().gameList.add(newGame);
+                    if (widget.game != null && widget.index != null) {
+                        Gist().gameList[widget.index!] = newGame;
+                    } else {
+                        Gist().gameList.add(newGame);
+                    }
 
-                    Github().saveGistLocally().then((gist) {
+                    Github().saveGistLocally().then((_) {
+                      if (!mounted) return;
                       Navigator.pop(context);
                     });
                   }
@@ -83,27 +81,24 @@ class _GameFormPageState extends State<GameFormPage> {
       body: Form(
         key: _formKey,
         child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           child: SingleChildScrollView(
             child: Column(
               children: <Widget>[
                 // Title
                 TextFormField(
                   controller: _titleController,
-                  decoration: InputDecoration(labelText: "Titel"),
+                  decoration: const InputDecoration(labelText: "Titel"),
                   validator: (value) {
-                    return value.isEmpty ? 'Muss ausgefüllt sein.' : null;
+                    return (value == null || value.isEmpty) ? 'Muss ausgefüllt sein.' : null;
                   },
                 ),
                 // System
-                DropdownButtonFormField(
+                DropdownButtonFormField<System>(
                   validator: (value) {
-                    var msg;
-                    if (_selectedSystem == System.UNKNOWN)
-                      msg = 'System darf nicht unbekannt sein';
-                    if (_selectedSystem == null) msg = 'Muss gewählt werden';
-
-                    return msg;
+                    if (value == System.unknown) return 'System darf nicht unbekannt sein';
+                    if (value == null) return 'Muss gewählt werden';
+                    return null;
                   },
                   value: _selectedSystem,
                   onChanged: (system) {
@@ -119,7 +114,7 @@ class _GameFormPageState extends State<GameFormPage> {
                   }).toList(),
                 ),
                 // PlayStyle
-                DropdownButtonFormField(
+                DropdownButtonFormField<PlayStyle>(
                   validator: (value) {
                     return _selectedPlayStyles.isEmpty
                         ? "Mindestens eines muss gewählt worden sein"
@@ -129,6 +124,7 @@ class _GameFormPageState extends State<GameFormPage> {
                       ? null
                       : _selectedPlayStyles.last,
                   onChanged: (playStyle) {
+                    if (playStyle == null) return;
                     setState(() {
                       if (_selectedPlayStyles.contains(playStyle)) {
                         _selectedPlayStyles.remove(playStyle);

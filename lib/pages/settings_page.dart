@@ -3,12 +3,13 @@ import 'package:flutter_gamelist_editor/util/constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsPage extends StatefulWidget {
+  const SettingsPage({super.key});
+
   @override
-  _SettingsPageState createState() => _SettingsPageState();
+  State<SettingsPage> createState() => _SettingsPageState();
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  final _scaffoldKey = GlobalKey<ScaffoldState>();
   final _gistUrlController = TextEditingController();
   final _oAuthTokenController = TextEditingController();
 
@@ -17,8 +18,10 @@ class _SettingsPageState extends State<SettingsPage> {
     super.initState();
 
     SharedPreferences.getInstance().then((sp) {
-      _gistUrlController.text = sp.getString(KEY_GIST_URL);
-      _oAuthTokenController.text = sp.getString(KEY_AUTH_TOKEN);
+      setState(() {
+        _gistUrlController.text = sp.getString(KEY_GIST_URL) ?? '';
+        _oAuthTokenController.text = sp.getString(KEY_AUTH_TOKEN) ?? '';
+      });
     });
 
     _gistUrlController.addListener(() {
@@ -36,36 +39,34 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   void dispose() {
-    [_gistUrlController, _oAuthTokenController].forEach((c) {
-      c.dispose();
-    });
+    _gistUrlController.dispose();
+    _oAuthTokenController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      key: _scaffoldKey,
       appBar: AppBar(
-        title: Text('Einstellungen'),
+        title: const Text('Einstellungen'),
       ),
       body: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: TextField(
               controller: _gistUrlController,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'URL',
               ),
             ),
           ),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: TextField(
               controller: _oAuthTokenController,
-              decoration: InputDecoration(labelText: 'Token'),
+              decoration: const InputDecoration(labelText: 'Token'),
             ),
           ),
         ],

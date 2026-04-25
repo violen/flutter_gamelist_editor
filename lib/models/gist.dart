@@ -12,13 +12,13 @@ class Gist {
 
   final fileName = 'gamesList.json';
 
-  Map<String, dynamic> _content; 
+  Map<String, dynamic>? _content; 
 
   Gist load(String rawGistString) {
     var content = _loadGistContent(rawGistString);
     _content = {
-      'meta': { 'lastEdit': DateTime.fromMillisecondsSinceEpoch(content['meta']['lastEdit']) ?? DateTime.now() },
-      'gameList': content['gameList'].map((el) => Game.fromJson(el)).toList()..sort()
+      'meta': { 'lastEdit': DateTime.fromMillisecondsSinceEpoch(content['meta']['lastEdit'] ?? 0) },
+      'gameList': (content['gameList'] as List).map((el) => Game.fromJson(el)).toList()..sort()
     };
     return _instance;
   }
@@ -30,27 +30,27 @@ class Gist {
   }
 
   Map<String, dynamic> toJson({bool update = false}) => {
-    'meta': { 'lastEdit': update ? DateTime.now().millisecondsSinceEpoch : _content['meta']['lastEdit'].millisecondsSinceEpoch },
-    'gameList': _content['gameList'].map((el) => el.toJson()).toList()
+    'meta': { 'lastEdit': update ? DateTime.now().millisecondsSinceEpoch : _content?['meta']['lastEdit'].millisecondsSinceEpoch ?? 0 },
+    'gameList': gameList.map((el) => el.toJson()).toList()
   };
 
-  List get gameList {
-    return _content != null ? _content['gameList'] : <Game>[];
+  List<Game> get gameList {
+    return _content != null ? _content!['gameList'] : <Game>[];
   }
 
   DateTime get lastEdit {
-    return _content['meta']['lastEdit'];
+    return _content?['meta']['lastEdit'] ?? DateTime.fromMillisecondsSinceEpoch(0);
   }
 
-  remove(Game game) {
+  void remove(Game game) {
     gameList.remove(game);
   }
 
   set lastEdit(DateTime lastEdit) {
-    _content['meta']['lastEdit'] = lastEdit;
+    _content?['meta']['lastEdit'] = lastEdit;
   }
 
-  Map _loadGist(String string) => json.decode(string);
-  Map _loadGistContent(String string) => json.decode(_loadGist(string)['files'][fileName]['content']);
+  Map<String, dynamic> _loadGist(String string) => json.decode(string);
+  Map<String, dynamic> _loadGistContent(String string) => json.decode(_loadGist(string)['files'][fileName]['content']);
 
 }
