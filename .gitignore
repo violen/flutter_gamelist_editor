@@ -42,3 +42,6 @@ android/**/.classpath
 # Exceptions to above rules.
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
 !.vscode/launch.json
+
+# GitHub Credentials
+.github/token
