@@ -45,3 +45,5 @@ android/**/.classpath
 
 # GitHub Credentials
 .github/token
+
+test_settings.json
