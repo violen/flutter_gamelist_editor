@@ -1,36 +1,38 @@
 ---
 name: github-workflow
-description: Autonomer GitHub Workflow für PR-Erstellung, Review und Aufgabenfortführung. Nutzen, wenn Änderungen abgeschlossen sind und in das Repository (PR) fließen sollen oder wenn nach einem PR die nächste Aufgabe gestartet werden soll.
+description: Autonomer GitHub Workflow für PR-Erstellung, Review und Aufgabenfortführung. Nutze diesen Skill IMMER für Commits und PRs.
 ---
 
-# GitHub Autonomer Workflow
+# GitHub Autonomer Workflow (V2 - Sicherheit Fokus)
 
-Dieser Skill ermöglicht es dem Agenten, Änderungen am Projekt eigenständig in den GitHub-Workflow zu überführen und nahtlos an der nächsten Aufgabe weiterzuarbeiten.
+Dieser Skill stellt sicher, dass Änderungen am Projekt sauber, verifiziert und vollständig in das Repository fließen.
 
-## 1. Commit & Branching
+## 1. Vorbereitung & Prüfung (MANDATORISCH)
+- **Status prüfen:** Führe `git status` aus. Es dürfen keine unerwarteten Änderungen in anderen Dateien vorliegen.
+- **Diff Review:** Führe `git diff` aus und lies den Output aufmerksam. Entspricht der Code exakt dem Plan? Sind keine Debug-Prints oder Platzhalter enthalten?
+- **Analyse:** Führe IMMER `flutter analyze` aus. Ein PR darf nur erstellt werden, wenn keine Fehler (Errors) vorliegen. Warnungen sollten nach Möglichkeit behoben werden.
+
+## 2. Commit & Branching
 - **Branch-Name:** `feature/<task-name>` oder `fix/<bug-name>`.
-- **Commit-Stil:** Kurz und prägnant (maximal 50 Zeichen), orientiert am historischen Stil des Projekts (z. B. "Add SystemBubble", "Refactor models").
-- **Vorgehen:** Alle relevanten Dateien stagen, Commits erstellen, in den Remote-Branch pushen.
+- **Atomic Commits:** Teile große Änderungen in kleine, logische Einheiten auf (z.B. "UI: Update theme colors", "Fix: Gist parsing").
+- **Commit-Stil:** Kurz und prägnant (max. 50 Zeichen), historisch konsistent.
+- **Vorgehen:** 
+  1. `git checkout -b <branch>`
+  2. `git add <files>` (Nur die Dateien, die wirklich zum Task gehören!)
+  3. `git commit -m "<message>"`
 
-## 2. Pull Request (PR) Erstellung
-- **Titel:** Klarer Titel der Änderung.
-- **Body:** Kurze Zusammenfassung der Änderungen, inklusive technischer Highlights (z. B. "Migrated to Null Safety").
-- **Befehl:** `gh pr create --title "<Titel>" --body "<body>"`
+## 3. Pull Request (PR) & Self-Review
+- **Push:** `git push origin <branch>`
+- **Erstellung:** `gh pr create --title "<Titel>" --body "<body>"`
+- **Self-Review Checkliste:**
+  - [ ] Wurden ALLE geplanten Änderungen committet? (Prüfung via `git status` nach dem Commit).
+  - [ ] Ist der Branch-Stand auf dem Remote aktuell?
+  - [ ] Funktioniert der Build? (Ggf. im Hintergrund testen).
 
-## 3. Pull Request Review (Self-Review)
-- **Checkliste:**
-  - [ ] Code wurde mit `flutter analyze` geprüft.
-  - [ ] App wurde auf einem physischen Gerät (IP `192.168.133.202`) oder Emulator getestet.
-  - [ ] `GEMINI.md` wurde aktualisiert, falls nötig.
-- **Vorgehen:** Der Agent führt einen Self-Review durch und dokumentiert dies im PR-Kommentar oder in der PR-Beschreibung.
+## 4. Merging
+- Erst mergen, wenn der Agent absolut sicher ist, dass der lokale Stand sauber ist.
+- Nach dem Merge: `git checkout develop` und `git pull origin develop`.
 
-## 4. Fortführung (Keep Going)
-- Nach erfolgreicher PR-Erstellung soll der Agent:
-  1. Den aktuellen Status in `GEMINI.md` unter "Completed" oder "In Progress" aktualisieren.
-  2. Die nächste logische Aufgabe aus dem Projektplan oder den Zielen in `GEMINI.md` identifizieren.
-  3. Den Benutzer kurz informieren: "PR #X erstellt. Ich fahre nun fort mit: <Nächste Aufgabe>."
-  4. Die nächste Aufgabe ohne explizite Aufforderung starten.
-
-## Besondere Regeln
-- Bei kritischen Fehlern im Build oder in der Analyse: **STOPP** und den Benutzer informieren.
-- Keine PRs mergen, außer der Benutzer hat dies explizit erlaubt (Standard: PR erstellen und auf Review warten).
+## Besondere Sicherheitsregeln
+- **KEIN SCHNELLDURCHLAUF:** Wenn der Agent bemerkt, dass Dateien im "Modified" Status zurückbleiben, muss er den Prozess stoppen und den Grund finden.
+- **SYNC-CHECK:** Vor jedem PR prüfen: `git fetch origin` gefolgt von einem Vergleich, ob der lokale Stand wirklich das ist, was hochgepusht werden soll.
