@@ -30,34 +30,33 @@ class Github extends ChangeNotifier {
   Future<void> loadFromInternet() async {
     var sp = await SharedPreferences.getInstance();
     var url = sp.getString(KEY_GIST_URL);
-    if (url == null || url.isEmpty) return;
-    try {
-      var response = await http.get(Uri.parse(url), headers: await _authHeader);
-      if (response.statusCode == 200) {
-        await _writeGistString(response.body);
-        Gist().load(response.body);
-        notifyListeners();
-      }
-    } catch (e) {
-      debugPrint("Error loading from internet: $e");
+    if (url == null || url.isEmpty) throw Exception("Gist URL nicht konfiguriert");
+    
+    var response = await http.get(Uri.parse(url), headers: await _authHeader);
+    if (response.statusCode == 200) {
+      await _writeGistString(response.body);
+      Gist().load(response.body);
+      notifyListeners();
+    } else {
+      throw Exception("Fehler beim Laden: ${response.statusCode}");
     }
   }
 
   Future<void> saveToInternet() async {
     var sp = await SharedPreferences.getInstance();
     var url = sp.getString(KEY_GIST_URL);
-    if (url == null || url.isEmpty) return;
-    try {
-      var response = await http.patch(Uri.parse(url), 
-        headers: await _authHeader, 
-        body: json.encode({ 'files': { Gist().fileName: { 'content': gistToJson(Gist()) }}}));
-      if (response.statusCode == 200) {
-        await _writeGistString(response.body);
-        Gist().load(response.body);
-        notifyListeners();
-      }
-    } catch (e) {
-      debugPrint("Error saving to internet: $e");
+    if (url == null || url.isEmpty) throw Exception("Gist URL nicht konfiguriert");
+
+    var response = await http.patch(Uri.parse(url), 
+      headers: await _authHeader, 
+      body: json.encode({ 'files': { Gist().fileName: { 'content': gistToJson(Gist()) }}}));
+    
+    if (response.statusCode == 200) {
+      await _writeGistString(response.body);
+      Gist().load(response.body);
+      notifyListeners();
+    } else {
+      throw Exception("Fehler beim Speichern: ${response.statusCode}");
     }
   }
 
