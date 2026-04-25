@@ -16,141 +16,131 @@ class GameFormPage extends StatefulWidget {
 
 class _GameFormPageState extends State<GameFormPage> {
   final _formKey = GlobalKey<FormState>();
-
   final _titleController = TextEditingController();
-
   final _selectedPlayStyles = <PlayStyle>[];
-
   System? _selectedSystem;
-
-  bool _canSave = false;
 
   @override
   void initState() {
     super.initState();
-
     if (widget.game != null) {
       _titleController.text = widget.game!.title;
       _selectedSystem = widget.game!.system;
       _selectedPlayStyles.addAll(widget.game!.playStyles);
     }
-
-    _titleController.addListener(() {
-      setState(() {
-        _canSave = _formKey.currentState?.validate() ?? false;
-      });
-    });
   }
 
   @override
   void dispose() {
     _titleController.dispose();
-
     super.dispose();
+  }
+
+  void _save() {
+    if (_formKey.currentState?.validate() ?? false) {
+      var newGame = Game(
+          title: _titleController.text,
+          system: _selectedSystem ?? System.unknown,
+          playStyles: _selectedPlayStyles);
+      
+      if (widget.game != null && widget.index != null) {
+        Gist().gameList[widget.index!] = newGame;
+      } else {
+        Gist().gameList.add(newGame);
+      }
+
+      Github().saveGistLocally().then((_) {
+        if (!mounted) return;
+        Navigator.pop(context);
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: (widget.game != null) ? const Text("Bearbeiten") : const Text("Erstellen"),
-        actions: <Widget>[
+        title: Text(widget.game != null ? "Spiel bearbeiten" : "Neues Spiel"),
+        actions: [
           IconButton(
-            icon: const Icon(Icons.save),
-            onPressed: (_canSave || (_formKey.currentState?.validate() ?? false))
-                ? () {
-                    var newGame = Game(
-                        title: _titleController.text,
-                        system: _selectedSystem ?? System.unknown,
-                        playStyles: _selectedPlayStyles);
-                    if (widget.game != null && widget.index != null) {
-                        Gist().gameList[widget.index!] = newGame;
-                    } else {
-                        Gist().gameList.add(newGame);
-                    }
-
-                    Github().saveGistLocally().then((_) {
-                      if (!mounted) return;
-                      Navigator.pop(context);
-                    });
-                  }
-                : null,
+            icon: const Icon(Icons.check),
+            onPressed: _save,
           )
         ],
       ),
       body: Form(
         key: _formKey,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: SingleChildScrollView(
-            child: Column(
-              children: <Widget>[
-                // Title
-                TextFormField(
-                  controller: _titleController,
-                  decoration: const InputDecoration(labelText: "Titel"),
-                  validator: (value) {
-                    return (value == null || value.isEmpty) ? 'Muss ausgefüllt sein.' : null;
-                  },
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextFormField(
+                controller: _titleController,
+                decoration: const InputDecoration(
+                  labelText: "Titel",
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.title),
                 ),
-                // System
-                DropdownButtonFormField<System>(
-                  validator: (value) {
-                    if (value == System.unknown) return 'System darf nicht unbekannt sein';
-                    if (value == null) return 'Muss gewählt werden';
-                    return null;
-                  },
-                  value: _selectedSystem,
-                  onChanged: (system) {
-                    setState(() {
-                      _selectedSystem = system;
-                    });
-                  },
-                  items: System.values.map((system) {
-                    return DropdownMenuItem<System>(
-                      value: system,
-                      child: Text(system.name),
-                    );
-                  }).toList(),
+                validator: (value) =>
+                    (value == null || value.isEmpty) ? 'Bitte Titel eingeben' : null,
+              ),
+              const SizedBox(height: 20),
+              DropdownButtonFormField<System>(
+                decoration: const InputDecoration(
+                  labelText: "System",
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.computer),
                 ),
-                // PlayStyle
-                DropdownButtonFormField<PlayStyle>(
-                  validator: (value) {
-                    return _selectedPlayStyles.isEmpty
-                        ? "Mindestens eines muss gewählt worden sein"
-                        : null;
-                  },
-                  value: _selectedPlayStyles.isEmpty
-                      ? null
-                      : _selectedPlayStyles.last,
-                  onChanged: (playStyle) {
-                    if (playStyle == null) return;
-                    setState(() {
-                      if (_selectedPlayStyles.contains(playStyle)) {
-                        _selectedPlayStyles.remove(playStyle);
-                      } else {
-                        _selectedPlayStyles.add(playStyle);
-                      }
-                    });
-                  },
-                  items: PlayStyle.values.map((playStyle) {
-                    return DropdownMenuItem<PlayStyle>(
-                      value: playStyle,
-                      child: Row(
-                        children: <Widget>[
-                          Icon(_selectedPlayStyles.contains(playStyle)
-                              ? Icons.check
-                              : null),
-                          Text(playStyle.name)
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                )
-              ],
-            ),
+                value: _selectedSystem,
+                items: System.values
+                    .where((s) => s != System.unknown)
+                    .map((s) => DropdownMenuItem(value: s, child: Text(s.name)))
+                    .toList(),
+                onChanged: (val) => setState(() => _selectedSystem = val),
+                validator: (val) => val == null ? 'Bitte System wählen' : null,
+              ),
+              const SizedBox(height: 24),
+              Text(
+                "Play Styles",
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: PlayStyle.values.map((style) {
+                  final isSelected = _selectedPlayStyles.contains(style);
+                  return FilterChip(
+                    label: Text(style.name),
+                    selected: isSelected,
+                    onSelected: (selected) {
+                      setState(() {
+                        if (selected) {
+                          _selectedPlayStyles.add(style);
+                        } else {
+                          _selectedPlayStyles.remove(style);
+                        }
+                      });
+                    },
+                  );
+                }).toList(),
+              ),
+              if (_selectedPlayStyles.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8, left: 12),
+                  child: Text(
+                    "Bitte mindestens einen Stil wählen",
+                    style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 12),
+                  ),
+                ),
+            ],
           ),
         ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _save,
+        label: const Text("Speichern"),
+        icon: const Icon(Icons.save),
       ),
     );
   }
