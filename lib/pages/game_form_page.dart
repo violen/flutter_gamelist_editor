@@ -95,7 +95,7 @@ class _GameFormPageState extends State<GameFormPage> {
                 value: _selectedSystem,
                 items: System.values
                     .where((s) => s != System.unknown)
-                    .map((s) => DropdownMenuItem(value: s, child: Text(s.name)))
+                    .map((s) => DropdownMenuItem(value: s, child: Text(s.displayName)))
                     .toList(),
                 onChanged: (val) => setState(() => _selectedSystem = val),
                 validator: (val) => val == null ? 'Bitte System wählen' : null,

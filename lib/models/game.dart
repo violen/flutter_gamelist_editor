@@ -62,22 +62,43 @@ System _parseSystem(String? system) {
 }
 
 extension SystemExtension on System {
-  Color? get color {
+  String get displayName {
     switch (this) {
       case System.snes:
-        return Colors.grey[300];
+        return 'SNES';
       case System.wii:
-        return Colors.blue[200];
+        return 'WII';
       case System.wiiu:
-        return Colors.blue[300];
+        return 'WIIU';
       case System.gcn:
-        return Colors.purple[300];
+        return 'GCN';
       case System.pc:
-        return Colors.brown[300];
+        return 'PC';
       case System.genesis:
-        return Colors.orange[300];
+        return 'GENESIS';
       case System.switchConsole:
-        return Colors.red[300];
+        return 'NSW';
+      case System.unknown:
+        return 'UNKNOWN';
+    }
+  }
+
+  Color get color {
+    switch (this) {
+      case System.snes:
+        return const Color(0xFF808080); // Classic Gray
+      case System.wii:
+        return const Color(0xFF00ADEF); // Wii Blue
+      case System.wiiu:
+        return const Color(0xFF009AC7); // WiiU Cyan
+      case System.gcn:
+        return const Color(0xFF6509CB); // GameCube Purple
+      case System.pc:
+        return const Color(0xFF3E2723); // PC Brown
+      case System.genesis:
+        return const Color(0xFF000000); // SEGA Black
+      case System.switchConsole:
+        return const Color(0xFFE60012); // Switch Red
       case System.unknown:
         return Colors.grey;
     }

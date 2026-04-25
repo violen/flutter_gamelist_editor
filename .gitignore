@@ -47,3 +47,5 @@ android/**/.classpath
 .github/token
 
 test_settings.json
+
+.vscode/
