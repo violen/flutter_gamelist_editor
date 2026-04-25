@@ -1,0 +1,5 @@
+{
+  "_comment": "Anleitung: Erstelle einen GitHub Token mit 'gist' Scope. Die URL sollte das API-Format haben: https://api.github.com/gists/DEINE_GIST_ID",
+  "github_token": "DEIN_TOKEN_HIER",
+  "gist_url": "https://api.github.com/gists/DEINE_GIST_ID"
+}
