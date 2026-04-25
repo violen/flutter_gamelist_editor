@@ -1,19 +1,19 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-enum PlayStyle { LetsPlay, Casual, WithCommunity }
-enum System { SNES, WII, WIIU, GCN, PC, GENESIS, SWITCH, UNKNOWN }
+enum PlayStyle { letsPlay, casual, withCommunity }
 
-class Game extends Comparable<dynamic> {
+enum System { snes, wii, wiiu, gcn, pc, genesis, switchConsole, unknown }
+
+class Game implements Comparable<Game> {
   String title;
   System system;
   List<PlayStyle> playStyles;
 
-  Game({this.title, this.system, this.playStyles});
+  Game({required this.title, required this.system, required this.playStyles});
 
   factory Game.fromJson(Map<String, dynamic> json) {
     return Game(
-        title: json['title'],
+        title: json['title'] ?? '',
         system: _parseSystem(json['system']),
         playStyles: _parsePlayStyle(json['playStyle']));
   }
@@ -23,64 +23,52 @@ class Game extends Comparable<dynamic> {
   }
 
   Map<String, dynamic> toJson() => {
-        'title': this.title,
-        'system': this.system.name,
+        'title': title,
+        'system': system.name,
         'playStyle': _playStylesToJsonArray()
       };
 
   @override
-  int compareTo(other) {
+  int compareTo(Game other) {
     return title.compareTo(other.title);
   }
 }
 
-List<PlayStyle> _parsePlayStyle(List styles) {
+List<PlayStyle> _parsePlayStyle(List<dynamic>? styles) {
   var playStyles = <PlayStyle>[];
+  if (styles == null) return playStyles;
 
-  PlayStyle.values.forEach((el) {
+  for (var el in PlayStyle.values) {
     if (styles.contains(el.name)) playStyles.add(el);
-  });
+  }
   return playStyles;
 }
 
-System _parseSystem(String system) {
+System _parseSystem(String? system) {
+  if (system == null) return System.unknown;
   return System.values
-      .firstWhere((val) => system == val.name, orElse: () => System.UNKNOWN);
+      .firstWhere((val) => system == val.name, orElse: () => System.unknown);
 }
 
 extension SystemExtension on System {
-  String get name => describeEnum(this);
-
-  Color get color {
-    var color;
+  Color? get color {
     switch (this) {
-      case System.SNES:
-        color = Colors.grey[300];
-        break;
-      case System.WII:
-        color = Colors.blue[200];
-        break;
-      case System.WIIU:
-        color = Colors.blue[300];
-        break;
-      case System.GCN:
-        color = Colors.purple[300];
-        break;
-      case System.PC:
-        color = Colors.brown[300];
-        break;
-      case System.GENESIS:
-        color = Colors.orange[300];
-        break;
-      case System.SWITCH:
-        color = Colors.red[300];
-        break;
-      default: 
+      case System.snes:
+        return Colors.grey[300];
+      case System.wii:
+        return Colors.blue[200];
+      case System.wiiu:
+        return Colors.blue[300];
+      case System.gcn:
+        return Colors.purple[300];
+      case System.pc:
+        return Colors.brown[300];
+      case System.genesis:
+        return Colors.orange[300];
+      case System.switchConsole:
+        return Colors.red[300];
+      case System.unknown:
+        return Colors.grey;
     }
-    return color;
   }
-}
-
-extension PlayStyleExtension on PlayStyle {
-  String get name => describeEnum(this);
 }
