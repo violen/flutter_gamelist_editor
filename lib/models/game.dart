@@ -39,15 +39,26 @@ List<PlayStyle> _parsePlayStyle(List<dynamic>? styles) {
   if (styles == null) return playStyles;
 
   for (var el in PlayStyle.values) {
-    if (styles.contains(el.name)) playStyles.add(el);
+    // Case-insensitive matching for legacy data
+    if (styles.any((s) => s.toString().toLowerCase() == el.name.toLowerCase())) {
+      playStyles.add(el);
+    }
   }
   return playStyles;
 }
 
 System _parseSystem(String? system) {
   if (system == null) return System.unknown;
-  return System.values
-      .firstWhere((val) => system == val.name, orElse: () => System.unknown);
+  
+  final input = system.toLowerCase();
+  
+  // Special handling for renamed enums
+  if (input == 'switch') return System.switchConsole;
+  
+  return System.values.firstWhere(
+    (val) => val.name.toLowerCase() == input, 
+    orElse: () => System.unknown
+  );
 }
 
 extension SystemExtension on System {
