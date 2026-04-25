@@ -21,20 +21,22 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFFFF6D00),
-          primary: const Color(0xFFFF6D00),
-          surface: const Color(0xFF1E1E1E),
-          background: const Color(0xFF121212),
+          seedColor: const Color(0xFFFF7800),
+          primary: const Color(0xFFFF7800),
+          surface: const Color(0xFF1A1A1A),
+          onPrimary: Colors.white,
           brightness: Brightness.dark,
         ),
-        scaffoldBackgroundColor: const Color(0xFF121212),
+        scaffoldBackgroundColor: const Color(0xFF0D0D0D),
         cardTheme: const CardThemeData(
-          color: Color(0xFF1E1E1E),
-          elevation: 4,
+          color: Color(0xFF1A1A1A),
+          elevation: 2,
         ),
         appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF1E1E1E),
-          foregroundColor: Colors.white,
+          backgroundColor: Color(0xFF1A1A1A),
+          foregroundColor: Color(0xFFFF7800),
+          surfaceTintColor: Colors.transparent,
+          elevation: 0,
         ),
       ),
       home: ChangeNotifierProvider<Github>(
@@ -93,10 +95,12 @@ class _MyHomePageState extends State<MyHomePage> {
             tooltip: 'Download from Gist',
             onPressed: () {
               github.loadFromInternet().then((_) {
+                if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('✅ Gist erfolgreich geladen')),
                 );
               }).catchError((e) {
+                if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('❌ Fehler beim Laden: $e'), backgroundColor: Colors.red),
                 );
@@ -108,10 +112,12 @@ class _MyHomePageState extends State<MyHomePage> {
             tooltip: 'Upload to Gist',
             onPressed: () {
               github.saveToInternet().then((_) {
+                if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('✅ Gist erfolgreich gespeichert')),
                 );
               }).catchError((e) {
+                if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('❌ Fehler beim Speichern: $e'), backgroundColor: Colors.red),
                 );
@@ -382,6 +388,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _openGameForm({Game? game, int? index}) {
+    if (!mounted) return;
     Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) {
       return GameFormPage(
         game: game,

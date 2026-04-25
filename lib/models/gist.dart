@@ -63,7 +63,7 @@ class Gist {
   Map<String, dynamic>? _loadGistContent(String string) {
     try {
       var gist = _loadGist(string);
-      if (gist is Map && gist.containsKey('files') && gist['files'].containsKey(fileName)) {
+      if (gist.containsKey('files') && gist['files'].containsKey(fileName)) {
         return json.decode(gist['files'][fileName]['content']);
       }
     } catch (e) {
