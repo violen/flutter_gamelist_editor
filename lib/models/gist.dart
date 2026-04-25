@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 
 import 'game.dart';
 
@@ -15,11 +16,17 @@ class Gist {
   Map<String, dynamic>? _content; 
 
   Gist load(String rawGistString) {
-    var content = _loadGistContent(rawGistString);
-    _content = {
-      'meta': { 'lastEdit': DateTime.fromMillisecondsSinceEpoch(content['meta']['lastEdit'] ?? 0) },
-      'gameList': (content['gameList'] as List).map((el) => Game.fromJson(el)).toList()..sort()
-    };
+    try {
+      var content = _loadGistContent(rawGistString);
+      if (content == null) return _instance;
+
+      _content = {
+        'meta': { 'lastEdit': DateTime.fromMillisecondsSinceEpoch(content['meta']?['lastEdit'] ?? 0) },
+        'gameList': ((content['gameList'] as List?)?.map((el) => Game.fromJson(el)).toList().cast<Game>() ?? <Game>[])..sort()
+      };
+    } catch (e) {
+      debugPrint("Error parsing Gist content: $e");
+    }
     return _instance;
   }
 
@@ -30,7 +37,7 @@ class Gist {
   }
 
   Map<String, dynamic> toJson({bool update = false}) => {
-    'meta': { 'lastEdit': update ? DateTime.now().millisecondsSinceEpoch : _content?['meta']['lastEdit'].millisecondsSinceEpoch ?? 0 },
+    'meta': { 'lastEdit': update ? DateTime.now().millisecondsSinceEpoch : _content?['meta']?['lastEdit']?.millisecondsSinceEpoch ?? 0 },
     'gameList': gameList.map((el) => el.toJson()).toList()
   };
 
@@ -39,7 +46,7 @@ class Gist {
   }
 
   DateTime get lastEdit {
-    return _content?['meta']['lastEdit'] ?? DateTime.fromMillisecondsSinceEpoch(0);
+    return _content?['meta']?['lastEdit'] ?? DateTime.fromMillisecondsSinceEpoch(0);
   }
 
   void remove(Game game) {
@@ -47,10 +54,22 @@ class Gist {
   }
 
   set lastEdit(DateTime lastEdit) {
-    _content?['meta']['lastEdit'] = lastEdit;
+    if (_content != null && _content!.containsKey('meta')) {
+        _content!['meta']['lastEdit'] = lastEdit;
+    }
   }
 
   Map<String, dynamic> _loadGist(String string) => json.decode(string);
-  Map<String, dynamic> _loadGistContent(String string) => json.decode(_loadGist(string)['files'][fileName]['content']);
+  Map<String, dynamic>? _loadGistContent(String string) {
+    try {
+      var gist = _loadGist(string);
+      if (gist is Map && gist.containsKey('files') && gist['files'].containsKey(fileName)) {
+        return json.decode(gist['files'][fileName]['content']);
+      }
+    } catch (e) {
+      debugPrint("Error decoding Gist JSON: $e");
+    }
+    return null;
+  }
 
 }

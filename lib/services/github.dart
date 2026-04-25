@@ -13,7 +13,7 @@ class Github extends ChangeNotifier {
 
   static final Github _instance = Github._();
 
-  final _fileName = 'gameList.json';
+  final _fileName = 'gist_data.json';
 
   factory Github() {
     return _instance;
@@ -31,29 +31,45 @@ class Github extends ChangeNotifier {
     var sp = await SharedPreferences.getInstance();
     var url = sp.getString(KEY_GIST_URL);
     if (url == null || url.isEmpty) return;
-    var response = await http.get(Uri.parse(url), headers: await _authHeader);
-    await _writeGistString(response.body);
-    Gist().load(response.body);
-    notifyListeners();
+    try {
+      var response = await http.get(Uri.parse(url), headers: await _authHeader);
+      if (response.statusCode == 200) {
+        await _writeGistString(response.body);
+        Gist().load(response.body);
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint("Error loading from internet: $e");
+    }
   }
 
   Future<void> saveToInternet() async {
     var sp = await SharedPreferences.getInstance();
     var url = sp.getString(KEY_GIST_URL);
     if (url == null || url.isEmpty) return;
-    var response = await http.patch(Uri.parse(url), 
-      headers: await _authHeader, 
-      body: json.encode({ 'files': { Gist().fileName: { 'content': gistToJson(Gist()) }}}));
-    await _writeGistString(response.body);
-    Gist().load(response.body);
-    notifyListeners();
+    try {
+      var response = await http.patch(Uri.parse(url), 
+        headers: await _authHeader, 
+        body: json.encode({ 'files': { Gist().fileName: { 'content': gistToJson(Gist()) }}}));
+      if (response.statusCode == 200) {
+        await _writeGistString(response.body);
+        Gist().load(response.body);
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint("Error saving to internet: $e");
+    }
   }
 
   Future<void> loadLocally() async {
     var loadedString = await _readGistString();
     if (loadedString.isNotEmpty) {
-      Gist().load(loadedString);
-      notifyListeners();
+      try {
+        Gist().load(loadedString);
+        notifyListeners();
+      } catch (e) {
+        debugPrint("Error loading locally: $e");
+      }
     }
   }
 

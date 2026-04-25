@@ -78,27 +78,20 @@ class _MyHomePageState extends State<MyHomePage> {
           )
         ],
       ),
-      body: ListView.separated(
-        separatorBuilder: (BuildContext context, int index) {
-          return const Divider(
-            color: Colors.grey,
-            thickness: 1,
-          );
-        },
+      body: ListView.builder(
         padding: const EdgeInsets.all(8),
         itemCount: Gist().gameList.length,
         itemBuilder: (BuildContext context, int index) {
+          final game = Gist().gameList[index];
           return GestureDetector(
-            onTap: () =>
-                _openGameForm(game: Gist().gameList[index], index: index),
+            onTap: () => _openGameForm(game: game, index: index),
             onHorizontalDragStart: (dragStart) {
               _dragStartX = dragStart.globalPosition.dx;
             },
             onHorizontalDragEnd: (dragEnd) {
               if (_dragStartX != null && _dragUpdateX != null && _dragStartX! < _dragUpdateX!) {
-                // Delete
                 setState(() {
-                  Gist().remove(Gist().gameList[index]);
+                  Gist().remove(game);
                   github.saveGistLocally();
                 });
               }
@@ -106,20 +99,42 @@ class _MyHomePageState extends State<MyHomePage> {
             onHorizontalDragUpdate: (dragUpdate) {
               _dragUpdateX = dragUpdate.globalPosition.dx;
             },
-            child: Container(
-              decoration: BoxDecoration(
-                border:
-                    Border.all(color: Theme.of(context).primaryColor, width: 1),
-              ),
-              padding: const EdgeInsets.all(8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  const Spacer(),
-                  Text(Gist().gameList[index].title),
-                  const Spacer(),
-                  SystemBubble(system: Gist().gameList[index].system,),
-                ],
+            child: Card(
+              elevation: 2,
+              margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            game.title,
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                        ),
+                        SystemBubble(system: game.system),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 4,
+                      runSpacing: 4,
+                      children: game.playStyles.map((style) {
+                        return Chip(
+                          label: Text(
+                            style.name,
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                          visualDensity: VisualDensity.compact,
+                          padding: EdgeInsets.zero,
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                ),
               ),
             ),
           );
