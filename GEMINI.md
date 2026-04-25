@@ -5,6 +5,7 @@
 - **Current Flutter Version:** 3.41.5 (managed via vfox).
 - **GitHub Integration:** GitHub CLI (`gh`) is configured using a token in `.github/token`. 
 - **User:** André Hauser (violen)
+- **Target Platform:** Android-only (iOS removed in Apr 2026).
 - **Android SDK:** `S:\android_sdk` (configured via `flutter config`)
 - **Java:** `T:\sdk\temurin\21`
 - **Debug Device:** `192.168.133.202` (Modern Android device)
