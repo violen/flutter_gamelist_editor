@@ -19,9 +19,23 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Game List Editor',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
         useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFFFF6D00),
+          primary: const Color(0xFFFF6D00),
+          surface: const Color(0xFF1E1E1E),
+          background: const Color(0xFF121212),
+          brightness: Brightness.dark,
+        ),
+        scaffoldBackgroundColor: const Color(0xFF121212),
+        cardTheme: const CardThemeData(
+          color: Color(0xFF1E1E1E),
+          elevation: 4,
+        ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF1E1E1E),
+          foregroundColor: Colors.white,
+        ),
       ),
       home: ChangeNotifierProvider<Github>(
         create: (BuildContext context) {
@@ -77,12 +91,32 @@ class _MyHomePageState extends State<MyHomePage> {
           IconButton(
             icon: const Icon(Icons.file_download),
             tooltip: 'Download from Gist',
-            onPressed: () => github.loadFromInternet(),
+            onPressed: () {
+              github.loadFromInternet().then((_) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('✅ Gist erfolgreich geladen')),
+                );
+              }).catchError((e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('❌ Fehler beim Laden: $e'), backgroundColor: Colors.red),
+                );
+              });
+            },
           ),
           IconButton(
             icon: const Icon(Icons.file_upload),
             tooltip: 'Upload to Gist',
-            onPressed: () => github.saveToInternet(),
+            onPressed: () {
+              github.saveToInternet().then((_) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('✅ Gist erfolgreich gespeichert')),
+                );
+              }).catchError((e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('❌ Fehler beim Speichern: $e'), backgroundColor: Colors.red),
+                );
+              });
+            },
           ),
           IconButton(
             icon: const Icon(Icons.settings),
@@ -99,7 +133,7 @@ class _MyHomePageState extends State<MyHomePage> {
       body: _filteredGames.isEmpty
           ? const Center(child: Text("Keine Spiele gefunden."))
           : ListView.builder(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.only(left: 8, right: 8, top: 8, bottom: 88),
               itemCount: _filteredGames.length,
               itemBuilder: (BuildContext context, int index) {
                 final game = _filteredGames[index];
@@ -205,6 +239,7 @@ class _MyHomePageState extends State<MyHomePage> {
             onPressed: _showFilterSheet,
             mini: true,
             backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+            shape: const CircleBorder(),
             child: const Icon(Icons.filter_list),
           ),
           const SizedBox(height: 12),
@@ -212,6 +247,7 @@ class _MyHomePageState extends State<MyHomePage> {
             heroTag: "add",
             onPressed: () => _openGameForm(),
             tooltip: 'Add a Game',
+            shape: const CircleBorder(),
             child: const Icon(Icons.add),
           ),
         ],
