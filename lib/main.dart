@@ -21,6 +21,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
         useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
       ),
       home: ChangeNotifierProvider<Github>(
         create: (BuildContext context) {
@@ -47,9 +48,6 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  double? _dragStartX;
-  double? _dragUpdateX;
-
   @override
   Widget build(BuildContext context) {
     var github = Provider.of<Github>(context);
@@ -61,14 +59,17 @@ class _MyHomePageState extends State<MyHomePage> {
         actions: <Widget>[
           IconButton(
             icon: const Icon(Icons.file_download),
+            tooltip: 'Download from Gist',
             onPressed: () => github.loadFromInternet(),
           ),
           IconButton(
             icon: const Icon(Icons.file_upload),
+            tooltip: 'Upload to Gist',
             onPressed: () => github.saveToInternet(),
           ),
           IconButton(
             icon: const Icon(Icons.settings),
+            tooltip: 'Settings',
             onPressed: () {
               Navigator.push(context,
                   MaterialPageRoute(builder: (BuildContext context) {
@@ -83,57 +84,88 @@ class _MyHomePageState extends State<MyHomePage> {
         itemCount: Gist().gameList.length,
         itemBuilder: (BuildContext context, int index) {
           final game = Gist().gameList[index];
-          return GestureDetector(
-            onTap: () => _openGameForm(game: game, index: index),
-            onHorizontalDragStart: (dragStart) {
-              _dragStartX = dragStart.globalPosition.dx;
+          return Dismissible(
+            key: Key(game.title + index.toString()),
+            direction: DismissDirection.endToStart,
+            onDismissed: (direction) {
+              setState(() {
+                Gist().remove(game);
+                github.saveGistLocally();
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('${game.title} gelöscht')),
+              );
             },
-            onHorizontalDragEnd: (dragEnd) {
-              if (_dragStartX != null && _dragUpdateX != null && _dragStartX! < _dragUpdateX!) {
-                setState(() {
-                  Gist().remove(game);
-                  github.saveGistLocally();
-                });
-              }
+            confirmDismiss: (direction) async {
+              return await showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: const Text("Spiel löschen?"),
+                    content: Text("Möchtest du '${game.title}' wirklich aus der Liste entfernen?"),
+                    actions: <Widget>[
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(false),
+                        child: const Text("ABBRECHEN"),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(true),
+                        style: TextButton.styleFrom(foregroundColor: Colors.red),
+                        child: const Text("LÖSCHEN"),
+                      ),
+                    ],
+                  );
+                },
+              );
             },
-            onHorizontalDragUpdate: (dragUpdate) {
-              _dragUpdateX = dragUpdate.globalPosition.dx;
-            },
-            child: Card(
-              elevation: 2,
+            background: Container(
+              alignment: Alignment.centerRight,
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            game.title,
-                            style: Theme.of(context).textTheme.titleLarge,
+              decoration: BoxDecoration(
+                color: Colors.red[400],
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.delete, color: Colors.white),
+            ),
+            child: GestureDetector(
+              onTap: () => _openGameForm(game: game, index: index),
+              child: Card(
+                elevation: 2,
+                margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              game.title,
+                              style: Theme.of(context).textTheme.titleLarge,
+                            ),
                           ),
-                        ),
-                        SystemBubble(system: game.system),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 4,
-                      runSpacing: 4,
-                      children: game.playStyles.map((style) {
-                        return Chip(
-                          label: Text(
-                            style.name,
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                          visualDensity: VisualDensity.compact,
-                          padding: EdgeInsets.zero,
-                        );
-                      }).toList(),
-                    ),
-                  ],
+                          SystemBubble(system: game.system),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 4,
+                        runSpacing: 4,
+                        children: game.playStyles.map((style) {
+                          return Chip(
+                            label: Text(
+                              style.name,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                            visualDensity: VisualDensity.compact,
+                            padding: EdgeInsets.zero,
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
